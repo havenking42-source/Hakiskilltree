@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Piece Haki Skill Trees</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="title-panel">
+    <div class="title-inner">
+      <h1 class="page-title">Haki Skill Tree System</h1>
+      <button id="statsToggle" class="stats-toggle">Character Stats</button>
+    </div>
+    <div id="char-stats-box" class="char-stats-box" style="display:none;">
+      <!-- Populated by script.js -->
+    </div>
+  </div>
+
+  <div id="tree-wrapper" class="tree-wrapper">
+    <div id="armament-tree" class="tree">
+      <div class="tree-canvas"></div>
+      <h2>Armament Haki</h2>
+    </div>
+
+    <div id="observation-tree" class="tree">
+      <div class="tree-canvas"></div>
+      <h2>Observation Haki</h2>
+    </div>
+
+    <div id="conqueror-tree" class="tree">
+      <div class="tree-canvas"></div>
+      <h2>Conqueror's Haki</h2>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="controls-inner">
+      <div class="controls-left">
+        <label for="charName">Character Name:</label>
+        <input type="text" id="charName" placeholder="Enter name..." />
+      </div>
+
+      <div class="controls-center">
+        <label for="totalPoints">Total Haki Points:</label>
+        <input type="number" id="totalPoints" value="10" min="0" />
+
+        <span class="remaining-wrap">Remaining: <span id="remaining">10</span></span>
+      </div>
+
+      <div class="controls-right">
+        <div class="random-dropdown">
+          <button id="randomBtn" class="dropdown-toggle">Random ▼</button>
+          <div id="randomMenu" class="dropdown-menu" style="display:none;">
+            <button class="random-option" data-mode="all">True Random</button>
+            <button class="random-option" data-mode="arm-offense">Arm-Offense</button>
+            <button class="random-option" data-mode="arm-defense">Arm-Defense</button>
+            <button class="random-option" data-mode="obs-offense">Obs-Offense</button>
+            <button class="random-option" data-mode="obs-defense">Obs-Defense</button>
+          </div>
+        </div>
+        <button id="saveBtn">Save</button>
+        <button id="loadBtn">Load</button>
+        <button id="resetBtn">Reset</button>
+        <button id="exportBtn">Export</button>
+        <button id="importBtn">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="desc-box"></div>
+
+  <!-- Awakening modal: set initial Haki Pool & Cap when Armament Awakening is selected -->
+  <div id="awakening-modal" class="modal" style="display:none;" aria-hidden="true">
+    <div class="modal-content small">
+      <button id="awakening-close" class="modal-close" aria-label="Close">×</button>
+      <h3 id="awakening-title">Armament Awakening — Initial Haki</h3>
+      <div class="modal-body">
+        <label for="awakening-pool">Initial Haki Pool:</label>
+        <input id="awakening-pool" type="number" min="0" step="1" value="5" />
+        <label for="awakening-cap">Initial Haki Cap:</label>
+        <input id="awakening-cap" type="number" min="0" step="1" value="2" />
+      </div>
+      <div class="modal-actions">
+        <button id="awakening-cancel" class="btn">Cancel</button>
+        <button id="awakening-ok" class="btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for import -->
+  <input id="fileImport" type="file" accept=".json" style="display:none;" />
+
+  <!-- Custom alert modal -->
+  <div id="app-alert" class="app-alert" style="display:none;">
+    <div class="app-alert-backdrop"></div>
+    <div class="app-alert-box">
+      <button id="app-alert-close" class="app-alert-topclose" aria-label="Close">×</button>
+      <div class="app-alert-content" id="app-alert-content"></div>
+      <div class="app-alert-actions">
+        <button id="app-alert-ok">OK</button>
+        <button id="app-alert-fuck">Fuck you</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pool chooser modal (for skills that let you pick pool increase) -->
+  <div id="pool-chooser" class="modal" style="display:none;" aria-hidden="true">
+    <div class="modal-content small">
+      <button id="pool-chooser-close" class="modal-close" aria-label="Close">×</button>
+  <h3 id="pool-chooser-title">Haki Pool Increase</h3>
+      <div class="modal-body">
+        <label for="pool-chooser-value">Pick amount</label>
+        <input id="pool-chooser-value" type="number" min="0" step="1" />
+      </div>
+      <div class="modal-actions">
+        <button id="pool-chooser-cancel" class="btn">Cancel</button>
+        <button id="pool-chooser-ok" class="btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <div id="zoom-controls">
+    <div class="zoom-slider-wrap">
+      <div id="zoom-slider" class="zoom-slider">
+        <div id="zoom-thumb" class="zoom-thumb" draggable="false"></div>
+      </div>
+    </div>
+    <div class="zoom-buttons">
+      <button id="zoomOutBtn" class="zoom-btn">－</button>
+      <button id="zoomInBtn" class="zoom-btn">＋</button>
+    </div>
+  </div>
+
+  <!-- Floating Credits button (positioned above the bottom controls bar) -->
+  <button id="creditsBtn" class="credits-btn" aria-label="Credits">Credits</button>
+
+</body>
+</html>
