@@ -13,7 +13,7 @@
 {
     "id": "conquerors_will",
     "name": "Conqueror's Will",
-    "cost": 1,
+    "cost": 0,
     "tier": 1,
     "requires": ["conquerors_awakening"],
     "positionTag": "up",
