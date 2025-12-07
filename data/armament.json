@@ -343,6 +343,7 @@
     "positionTag": "Up",
     "tier": 2,
     "type": "defense",
+    "effects": [{ "type": "dice_defend", "value": "d6" }],
     "description": "Your haki dice while blocking becomes a 1d6. <br> \nYou can subtract bludgeoning, piercing and slashing damage taken from an attack for each haki die used (subtracted after resistance)."
   },
   {
