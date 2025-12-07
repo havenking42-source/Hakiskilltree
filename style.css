@@ -24,9 +24,9 @@ body {
   z-index: 350;
 }
 .title-inner {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 6px;
 
   background: rgba(20,20,20,0.85);
@@ -41,28 +41,19 @@ body {
   color: gold;
 }
 
-.button-row {
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 10px !important;
-  width: 100%;
-  justify-content: center;
-}
+
 
 
 
 .stats-toggle {
   background: #222;
-  color: gold;
+  color: gold;    
+  flex-direction: row;
   border: 1px solid #444;
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
 
-  display: inline-block !important;  /* force inline behavior */
-  width: auto !important;            /* prevent stretching */
-  white-space: nowrap;               /* prevent wrapping */
-  text-align: center;
 }
 
 
