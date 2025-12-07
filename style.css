@@ -25,8 +25,8 @@ body {
 }
 .title-inner {
   display: flex;
-  flex-direction: column; /* stack title and button */
-  align-items: flex-end;  /* right align contents */
+  flex-direction: column;
+  align-items: center;
   gap: 6px;
 
   background: rgba(20,20,20,0.85);
@@ -34,7 +34,23 @@ body {
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
-.title-inner .page-title { margin: 0; font-size: 1.55em; text-align: right; }
+.page-title {
+  text-align: center;
+  font-size: 1.8em;
+  margin: 0;
+  color: gold;
+}
+
+.button-row {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 10px !important;
+  width: 100%;
+  justify-content: center;
+}
+
+
+
 .stats-toggle {
   background: #222;
   color: gold;
@@ -42,7 +58,14 @@ body {
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
+
+  display: inline-block !important;  /* force inline behavior */
+  width: auto !important;            /* prevent stretching */
+  white-space: nowrap;               /* prevent wrapping */
+  text-align: center;
 }
+
+
 
 /* Character stats popup (resembles hover desc) */
 .char-stats-box {

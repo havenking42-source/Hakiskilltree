@@ -14,6 +14,7 @@ const remainingDisplay = document.getElementById("remaining");
 const saveBtn = document.getElementById("saveBtn");
 const loadBtn = document.getElementById("loadBtn");
 const wrapper = document.getElementById("tree-wrapper");
+const docBtn = document.getElementById("docBtn");
 
 // Elements for character stats UI (populated after DOM changes)
 let statsToggle = null;
@@ -1527,8 +1528,8 @@ function closeAlert() {
 function setupGlobalInteractions() {
   saveBtn.addEventListener("click", saveProgress);
   loadBtn.addEventListener("click", loadProgress);
-  totalInput.addEventListener("input", updateRemainingUI);
-  
+
+   
   // Wire dropdown toggle and mode selection
   const randomBtn = document.getElementById("randomBtn");
   const randomMenu = document.getElementById("randomMenu");
