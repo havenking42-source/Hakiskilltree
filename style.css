@@ -34,6 +34,13 @@ body {
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
+
+.title-buttons {
+  display: inline-flex;
+  gap: 80px;
+  align-items: center;
+  justify-content: flex-end;
+}
 .page-title {
   text-align: center;
   font-size: 1.8em;
@@ -85,12 +92,15 @@ body {
    font-family: 'Trebuchet MS';
   z-index: 500;
   background: rgba(0,0,0,0.98);
-  border: 2px solid transparent; /* set by JS per skill type */
+  border: 10px solid transparent; /* thicker handle border */
+  /* gradient border: skill color at top -> black at bottom */
+  border-image: linear-gradient(to bottom, var(--skill-border-color, #a00) 0%, #000000e3 100%) 1;
   padding: 10px 12px 12px 12px;
   border-radius: 8px;
-  color: #fff;
+  color: #d8d8d8;
   width: 340px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  box-shadow: 0px -2px 20px var(--skill-border-color, #a00);
+  cursor: grab; /* show grab when hovering the border by default */
 }
 .persist-desc-box .persist-close {
   position: absolute;
@@ -107,6 +117,9 @@ body {
   cursor: pointer;
 }
 .persist-desc-box .persist-content { margin-top: 6px; }
+.persist-desc-box .persist-content { user-select: text; -webkit-user-select: text; cursor: text; }
+.persist-desc-box .persist-close { cursor: pointer; }
+.persist-desc-box.dragging { cursor: grabbing; }
 .persist-desc-box { cursor: grab; }
 .persist-desc-box.dragging { cursor: grabbing; opacity: 0.98; }
 
@@ -191,7 +204,11 @@ body {
 .skill.offense { border-color: red; }
 .skill.defense { border-color: royalblue; }
 .skill.shared { border-color: rgb(77, 5, 92); }
-.skill.special { border-color: #ff5e00; }
+.skill.special { border-color: rgb(190, 108, 13); }
+.skill.utility { border-color: #f840ff; }
+.skill.vision { border-color: #558921; }
+.skill.v2 { border-color: #b6b55d; }
+
 
 .skill.available { box-shadow: 0 0 12px yellow; 
 animation: connector-breathe-skill 8.0s ease-in-out infinite;}
@@ -403,12 +420,12 @@ animation: connector-breathe-skill 8.0s ease-in-out infinite;}
   bottom: auto;
   left: auto;
   background: rgba(0, 0, 0, 0.95);
-  border: 1px solid gold;
+  border: 1.1px solid gold;
   padding: 10px;
   border-radius: 6px;
   width: 300px;
   max-width: 420px;
-  max-height: 260px; /* constrain height to avoid huge empty space */
+  max-height: 300px; /* constrain height to avoid huge empty space */
   overflow: auto;
   text-align: left;
   display: none;
@@ -506,7 +523,7 @@ animation: connector-breathe-skill 8.0s ease-in-out infinite;}
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   color: rgb(255, 255, 255);
   text-shadow: 2px 2px 4px rgba(2,3,3,0.75);
- background: linear-gradient(to bottom, rgba(251, 255, 0, 0.562), rgba(156, 58, 34, 0.2));
+ background: linear-gradient(to bottom, rgba(162, 0, 255, 0.562), rgba(73, 21, 97, 0.2));
   padding: 2px 8px;
   border-radius: 4px;
   text-transform: uppercase;
@@ -531,6 +548,25 @@ animation: connector-breathe-skill 8.0s ease-in-out infinite;}
   box-shadow: 0 6px 18px rgba(0,0,0,0.6);
 }
 
+/* DM button should look like credits button; positioned slightly above */
+.dm-btn {
+  position: fixed;
+  left: 12px;
+  bottom: 108px; /* sit above credits */
+  z-index: 22000;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  background: linear-gradient(180deg,#222,#111);
+  color: gold;
+  border: 1px solid #555;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+.dm-btn.active { background: linear-gradient(180deg,#f9d454,#d19b00); border-color: #f2c542; color: #111; }
+/* When using both classes, place DM button on the left above the credits button */
+.credits-btn.dm-btn { left: 12px; right: auto; bottom: 108px; }
+
 /* Floating bouncing words */
 .credits-word {
   position: fixed;
@@ -538,7 +574,7 @@ animation: connector-breathe-skill 8.0s ease-in-out infinite;}
   top: 0;
   font-weight: 800;
   font-size: 28px;
-  padding: 6px 10px;
+  padding: 6px 6px;
   border-radius: 6px;
   color: white;
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);

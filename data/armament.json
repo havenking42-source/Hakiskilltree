@@ -6,7 +6,7 @@
     "requires": [],
     "requires_operator": "NONE",
     "positionTag": "base",
-    "type": "shared",
+    "type": "special",
     "effects": [{ "type": "dice", "slot": "both", "value": "d1" }],
     "description": "Upon Awakening Armament Haki. <ul><li>Your initial Haki Pool is either 5 OR roll a 1d10.</li><li>Your initial Haki Cap is either 2 OR you can roll a 1d4 to determine.</li><li>Your initial Haki Dice is a d1.</li></ul>"
   },
@@ -243,7 +243,7 @@
     "requires": ["basic_defense_1", "basic_offense_1"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 5 }],
     "description": "Your Haki Pool increases by 5 or 1d8."
   },
@@ -254,7 +254,7 @@
     "requires": ["basic_defense_1", "basic_offense_1"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 5 }],
     "description": "Your Haki Pool increases by 1d10."
   },
@@ -265,7 +265,7 @@
     "requires": ["basic_defense_1", "basic_offense_1"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "description": "Your Haki Pool now fully refills on a short rest."
   },
   {
@@ -294,8 +294,8 @@
     "id": "full_body_3",
     "name": "Full Body III",
     "cost": 3,
-    "requires": ["basic_defense_2","basic_offense_2","full_body_2"],
-    "requires_operator": ["OR","AND"],
+    "requires": ["full_body_2", ["basic_defense_2","basic_offense_2"]],
+    "requires_operator": "AND",
     "positionTag": "between",
     "type": "shared",
     "positionOffset": -575,
@@ -312,12 +312,12 @@
     "type": "shared",
     "description": "No longer requires Concentration. \nYou can now use your reaction to enter Full Body. <br> \nWhile in Full Body:<ul><li>Your haki dice becomes 1d6 for attacking and defending.</li><li>Your haki cap increases by 1.</li><li>Your AC increases by 1</li><li>You gain +1 to hit on melee attacks</li><li>You gain +1 to hit on melee attacks.</li><li>You take -3 dmg from all sources</li></ul>"
   },
-   {
-    "id": "full_body_5",
-    "name": "Full Body V",
-    "cost": 3,
-    "requires": ["basic_defense_3","basic_offense_3","full_body_4"],
-    "requires_operator": ["AND"],
+  {
+   "id": "full_body_5",
+   "name": "Full Body V",
+   "cost": 3,
+   "requires": ["full_body_4", ["basic_defense_3","basic_offense_3"]],
+   "requires_operator": "AND",
     "positionTag": "between",
     "positionOffset": -550,
     "type": "shared",
@@ -365,7 +365,7 @@
     "requires": ["basic_defense_2", "basic_offense_2"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 5 }],
     "description": "Your Haki Pool increases by 5 or 1d8."
   },
@@ -376,7 +376,7 @@
     "requires": ["basic_defense_2", "basic_offense_2"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "cap", "delta": 1 }],
     "description": "Your Haki cap increases by 1."
   },
@@ -387,7 +387,7 @@
     "requires": ["basic_defense_2", "basic_offense_2"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 5 }],
     "description": "Your Haki Pool increases by 1d10."
   },
@@ -398,7 +398,7 @@
     "requires": ["basic_defense_2", "basic_offense_2"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "description": "Your Haki Pool fully refills in 10 minutes."
   },
   {
@@ -418,6 +418,7 @@
     "requires": ["best_defense_3"],
     "positionTag": "Up",
     "type": "defense",
+    "effects": [{ "type": "dice_defend_step", "delta": 1 }],
     "description": "When you use your reaction to block with haki, your haki dice grow by 1 size "
   },
    {
@@ -627,6 +628,7 @@
     "requires": ["best_offense_3"],
     "positionTag": "Up",
     "type": "offense",
+    "effects": [{ "type": "dice_attack_step", "delta": 1 }],
     "description": "Your haki dice increase by 1 size when attacking"
   },
     {
@@ -670,7 +672,7 @@
     "requires_operator": "NONE",
     "positionTag": "Up",
     "type": "defense",
-    "description": "As a reaction you can activate Protective Overdrive to block a single attack. <br> You can add 3 extra dice once per round when defending against an attack. \nYour haki dice grow by 1 size when defending with the extra dice"
+    "description": "As a reaction you can activate Protective Overdrive to block a single attack. <br>  \nYou can increase your haki cap by 3 when you use Protective Overdrive to defend against a single attack. <br><br> Your haki dice grow by 1 size when defending with Protective Overdrive" 
   },
    {
     "id": "best_offense_5",
@@ -745,7 +747,7 @@
    "positionTag": "UpRight",
       "positionOffsetX": 280,
     "type": "defense",
-    "description": "Thick Skin can be used with a bonus action and lasts for 10 mins"
+    "description": "As a bonus action you can spend 12  haki points to form a small shield over your weapon/a body part for 1 minute. This gives you +4 to AC and decreases any dmg you take by 4 (per dmg source) with it for the duration or until you fall unconscious (you can use this even if your Haki Cap is less than 12). <br><br> If you are hit with a crit attack that doubles the haki damage, and you don’t block with any other form of haki besides Thick Skin, you negate the double damage."
   },
    {
     "id": "protective_overdrive_5",
@@ -756,7 +758,7 @@
     "positionTag": "UpRight",
       "positionOffsetX": 420,
     "type": "defense",
-    "description": "As a reaction you can activate Protective Overdrive to block a single attack. <br> You can add 3 extra dice once per round when defending against an attack. \nYour haki dice grow by 1 size when defending with the extra dice"
+    "description": "As a reaction you can activate Protective Overdrive to block a single attack. <br> You can add 3 extra dice once per round when defending against an attack."
   },
   {
     "id": "haki_cap_increase_3",
@@ -765,7 +767,7 @@
     "requires": ["basic_defense_3", "basic_offense_3"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "cap", "delta": 1 }],
     "description": "Your Haki Cap increases by 1."
   },
@@ -776,7 +778,7 @@
     "requires": ["basic_defense_3", "basic_offense_3"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 8 }],
     "description": "Your Haki Pool increases by 8 or 2d8."
   },
@@ -787,7 +789,7 @@
     "requires": ["basic_defense_3", "basic_offense_3"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "effects": [{ "type": "pool_choice", "default": 10 }],
     "description": "Your Haki Pool increases by 1d20."
   },
@@ -798,7 +800,7 @@
     "requires": ["basic_defense_3", "basic_offense_3"],
     "requires_operator": "OR",
     "positionTag": "between",
-    "type": "shared",
+    "type": "utility",
     "description": "You now regain 1 Haki point back into your Haki pool when you roll a Nat 20 on your attack rolls or saving throws."
   }
   

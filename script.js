@@ -26,6 +26,38 @@ window.__treeDataStore = [];
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
+// Helper: flatten a node's requirements into an array of ids (one-level flatten)
+function flattenReqs(reqs) {
+  if (!reqs) return [];
+  return (Array.isArray(reqs) ? reqs : [reqs]).flatMap(r => Array.isArray(r) ? r : [r]);
+}
+
+// Helper: check if a requirement item (string or array) is satisfied by a selection set
+function isReqItemSatisfied(reqItem, selSet) {
+  if (Array.isArray(reqItem)) return reqItem.some(id => selSet.has(id));
+  return selSet.has(reqItem);
+}
+
+// Helper: evaluate node requirements for a given selection set
+// Supports nested arrays as OR groups and top-level AND across items
+// If node.requires_operator is 'or', returns true if any top-level item satisfied.
+// If 'and', requires all top-level items be satisfied.
+// If unspecified, falls back to shared->OR, others->AND behavior.
+function areRequirementsSatisfied(node, selSet) {
+  const reqs = node.requires || [];
+  if (reqs.length === 0) return true;
+  let opRaw = node.requires_operator || node.requiresOperator || '';
+  if (Array.isArray(opRaw)) opRaw = opRaw[0] || '';
+  opRaw = opRaw.toString().toLowerCase();
+  const defaultOp = ((node.type || 'shared') === 'shared') ? 'or' : 'and';
+  const op = opRaw || defaultOp;
+  if (op === 'or') {
+    return reqs.some(r => isReqItemSatisfied(r, selSet));
+  }
+  // AND: every top-level item must be satisfied
+  return reqs.every(r => isReqItemSatisfied(r, selSet));
+}
+
 /* -----------------------------------------------------------
    INITIAL LOAD
 ----------------------------------------------------------- */
@@ -157,6 +189,8 @@ function renderCharStats() {
         </div> <br>
     <div class="stat-row"><span class="stat-label">Observation Focus Modifier:</span> <span class="stat-value" id="currentFocus">${stats.FocusMod}</span></div>
     <div class="stat-row"><span class="stat-label">Observation Range:</span> <span class="stat-value" id="currentRange">${stats.ObsRange}</span></div>
+       </div> <br>
+    <div class="stat-row"><span class="stat-label">Conqueror Range:</span> <span class="stat-value" id="currentConqRange">${stats.ConqRange}</span></div>
      </div>
     </div>
   `;
@@ -170,6 +204,9 @@ function computeCharStats(basePool = 0, baseCap = 0) {
   let pool = Number(basePool || 0);
   let capAttack = Number(baseCap || 0);
   let capDefend = Number(baseCap || 0);
+  // Conqueror's Range: starts at 0; multiplier effects should replace (use max)
+  let conqRange = 0;
+  let conqRangeMultiplier = 1;
   let focusMod = 0;
   let obsRange = 0;
 
@@ -183,6 +220,8 @@ function computeCharStats(basePool = 0, baseCap = 0) {
 
   let bestAttack = 0;
   let bestDefend = 0;
+  let attackStep = 0; // steps to increase attack dice size (non-stacking, use max)
+  let defendStep = 0; // steps to increase defend dice size (non-stacking, use max)
 
   Array.from(selected).forEach(key => {
     const parts = key.split('::');
@@ -225,21 +264,51 @@ function computeCharStats(basePool = 0, baseCap = 0) {
         const rank = dieRank[val] || (parseInt(val.replace(/[^0-9]/g, '')) || 1);
         bestDefend = Math.max(bestDefend, rank);
       } else if (t === 'focus_modifier') {
+              } else if (t === 'dice_attack_step') {
+                attackStep = Math.max(attackStep, Number(e.delta || e.value || 1));
+              } else if (t === 'dice_defend_step') {
+                defendStep = Math.max(defendStep, Number(e.delta || e.value || 1));
         focusMod += Number(e.delta || 0);
       } else if (t === 'observation_range') {
         obsRange += Number(e.delta || 0);
+        } else if (t === 'conqueror_range') {
+          // set-type effect: take the maximum explicit range (supports explicit set values)
+          const v = Number(e.value || e.delta || 0);
+          if (v > conqRange) conqRange = v;
+        } else if (t === 'conqueror_range_mul') {
+          // multiplicative effect: choose the largest multiplier among selected
+          const m = Number(e.delta || e.value || 1) || 1;
+          conqRangeMultiplier = Math.max(conqRangeMultiplier, m);
       }
     });
   });
+
+    // Apply multiplicative effects to conqueror range
+    conqRange = Math.round(conqRange * conqRangeMultiplier);
+
+  // helper to step a numeric die rank along {1,2,4,6,8,10}
+  function stepRank(rank, steps) {
+    const order = [1,2,4,6,8,10];
+    if (!rank) return rank;
+    const idx = order.indexOf(rank);
+    if (idx < 0) return rank;
+    const newIdx = Math.min(order.length - 1, idx + (Number(steps) || 0));
+    return order[newIdx];
+  }
+
+  // apply non-stacking step increments (only if a base rank exists)
+  const finalAttackRank = (bestAttack > 0 && attackStep > 0) ? stepRank(bestAttack, attackStep) : bestAttack;
+  const finalDefendRank = (bestDefend > 0 && defendStep > 0) ? stepRank(bestDefend, defendStep) : bestDefend;
 
   return {
     pool,
     capAttack,
     capDefend,
-    diceAttack: rankToDie(bestAttack),
-    diceDefend: rankToDie(bestDefend),
+    diceAttack: rankToDie(finalAttackRank),
+    diceDefend: rankToDie(finalDefendRank),
     FocusMod: focusMod,
     ObsRange: obsRange
+      ,ConqRange: conqRange
   };
 }
 
@@ -253,10 +322,14 @@ function computeDepths(data) {
   function depth(id, stack = new Set()) {
     if (memo[id] !== undefined) return memo[id];
     const s = byId[id];
-    if (!s || !s.requires || s.requires.length === 0) return (memo[id] = 0);
+    if (!s) return (memo[id] = 0);
+    const reqs = (s.requires || []);
+    if (reqs.length === 0) return (memo[id] = 0);
     if (stack.has(id)) return 0;
     stack.add(id);
-    const vals = s.requires.map(r => depth(r, new Set(stack)));
+    // Support nested arrays: pick deepest parent depth among all required ids
+    const reqIds = flattenReqs(s.requires || []);
+    const vals = reqIds.map(r => depth(r, new Set(stack)));
     return (memo[id] = 1 + Math.max(...vals));
   }
   data.forEach(s => depth(s.id));
@@ -288,10 +361,10 @@ function layoutAndRender(treeId, data, container, treeEl) {
   const tier3Extra = 500; // extra vertical lift for Tier 3 nodes to match Tier 2 spacing
   const tier4Extra = 500; // extra vertical lift for Tier 4 nodes to match Tier 2 spacing
  
-  // --- Grouping map: keys by sorted requires + normalized positionTag
+  // --- Grouping map: keys by sorted flattened requires + normalized positionTag
   const siblingGroups = {};
   data.forEach(n => {
-    const reqsKey = (n.requires || []).slice().sort().join('|');
+    const reqsKey = flattenReqs(n.requires || []).slice().sort().join('|');
     const tag = (n.positionTag || '').toLowerCase();
     const key = `${reqsKey}::${tag}`;
     if (!siblingGroups[key]) siblingGroups[key] = [];
@@ -325,7 +398,8 @@ function layoutAndRender(treeId, data, container, treeEl) {
       // positions, prefer parent-relative placement (so we place between parents
       // or above a single parent). Only fall back to column/tier layout when no
       // parent positions are available.
-      const parents = (node.requires || [])
+      const parentIds = flattenReqs(node.requires || []);
+      const parents = parentIds
         .map(id => data.find(s => s.id === id))
         .filter(Boolean)
         .filter(p => p._pos);
@@ -333,7 +407,7 @@ function layoutAndRender(treeId, data, container, treeEl) {
       let x, y;
       if (parents.length > 0) {
         const tag = (node.positionTag || '').toLowerCase();
-        const reqsKey = (node.requires || []).slice().sort().join('|');
+        const reqsKey = flattenReqs(node.requires || []).slice().sort().join('|');
         const groupKey = `${reqsKey}::${tag}`;
         const groupArr = siblingGroups[groupKey] || [];
         const groupIdx = groupArr.indexOf(node);
@@ -406,7 +480,7 @@ function layoutAndRender(treeId, data, container, treeEl) {
 
         // If grouped by same requires + positionTag even without a parent, spread them
         const tag = (node.positionTag || '').toLowerCase();
-        const reqsKey = (node.requires || []).slice().sort().join('|');
+        const reqsKey = flattenReqs(node.requires || []).slice().sort().join('|');
         const groupKey = `${reqsKey}::${tag}`;
         const groupArr = siblingGroups[groupKey] || [];
         const groupIdx = groupArr.indexOf(node);
@@ -431,15 +505,15 @@ function layoutAndRender(treeId, data, container, treeEl) {
       node._pos = { x, y };
 
       // --- Tier Anchoring adjustment (only apply when node has NO parents) ---
-      if (!((node.requires || []).length > 0 && parents.length > 0)) {
+      if (!(flattenReqs(node.requires || []).length > 0 && parents.length > 0)) {
         let tierBase = 0;
         if (node.tier) {
           // Base tier anchoring uses larger gap for Tier 2
           tierBase = (node.tier - 1) * 200;
           if (node.tier === 2 || node.Tier === 2) tierBase += tier2Extra;
-        } else if (node.requires?.length) {
+        } else if (flattenReqs(node.requires || []).length) {
           // infer tier from requirements
-          const parentTiers = node.requires
+          const parentTiers = flattenReqs(node.requires || [])
             .map(rid => {
               const parent = data.find(s => s.id === rid);
               return parent?.tier || 0;
@@ -455,7 +529,7 @@ function layoutAndRender(treeId, data, container, treeEl) {
       // and horizontal offsets for left/right variants ---
       try {
         const tagPost = (node.positionTag || '').toLowerCase();
-        const reqsKeyPost = (node.requires || []).slice().sort().join('|');
+        const reqsKeyPost = flattenReqs(node.requires || []).slice().sort().join('|');
         const groupKeyPost = `${reqsKeyPost}::${tagPost}`;
         const groupArrPost = siblingGroups[groupKeyPost] || [];
         const idxPost = groupArrPost.indexOf(node);
@@ -490,8 +564,9 @@ function layoutAndRender(treeId, data, container, treeEl) {
 
   // connectors
   data.forEach(skill => {
-    if (!skill.requires?.length) return;
-    skill.requires.forEach(reqId => {
+    const reqIds = flattenReqs(skill.requires || []);
+    if (!reqIds.length) return;
+    reqIds.forEach(reqId => {
       const from = data.find(s => s.id === reqId);
       const to = skill;
       if (!from?._pos || !to?._pos) return;
@@ -583,27 +658,54 @@ let persistentBoxKey = null;
 let hoverOverSkill = false;
 let hoverOverDesc = false;
 let hideDescTimer = null;
+// when user is actively selecting (pointerdown) inside the hover box, keep it visible
+let descSelecting = false;
+// when user has an active text selection inside the hover box, keep it visible
+let descHasSelection = false;
+// track pointerdown start inside hover box to detect drag-selection
+let descPointerDownInside = false;
+let descDownX = 0, descDownY = 0;
 
 function scheduleHideDesc() {
   if (hideDescTimer) clearTimeout(hideDescTimer);
   hideDescTimer = setTimeout(() => {
-    if (!hoverOverSkill && !hoverOverDesc && !persistentBoxEl) {
+    if (!hoverOverSkill && !hoverOverDesc && !descSelecting && !descHasSelection && !descPointerDownInside && !persistentBoxEl) {
       descBox.style.display = 'none';
     }
   }, 180);
+}
+
+// DM Mode: when enabled, ignore skill requirements and allow free selection
+window.__dmMode = false;
+function toggleDMMode(state) {
+  if (typeof state === 'boolean') window.__dmMode = state;
+  else window.__dmMode = !window.__dmMode;
+  const btn = document.getElementById('dmModeBtn');
+  if (btn) {
+    btn.classList.toggle('active', !!window.__dmMode);
+  }
+  // refresh availability visuals if returning to normal
+  try { updateAvailabilityAll(); } catch (e) {}
 }
 
 function showDesc(skill, ev, treeId) {
   // ephemeral hover box: position to the right of the skill element
   const pinId = `desc-pin-${Date.now()}`;
   // Build a human-friendly "Requires" line using skill names and type tags
-  let requiresDisplay = 'None';
+    let requiresDisplay = 'None';
   try {
     const reqs = Array.isArray(skill.requires) ? skill.requires : (skill.requires ? [skill.requires] : []);
     if (reqs.length > 0) {
       const store = (window.__treeDataStore || []).find(s => s.treeId === treeId) || {};
       const nodes = store.data || [];
       const reqNames = reqs.map(rid => {
+        if (Array.isArray(rid)) {
+          const names = rid.map(id => {
+            const node = nodes.find(n => n.id === id) || {};
+            return node.name || id;
+          });
+          return `(${names.join(' or ')})`;
+        }
         const node = nodes.find(n => n.id === rid) || {};
         const name = node.name || rid;
         return `${name}`;
@@ -688,6 +790,63 @@ function showDesc(skill, ev, treeId) {
         hoverOverDesc = false;
         scheduleHideDesc();
       });
+        // keep box visible while the user presses inside it; detect drag-selection
+        descBox.addEventListener('pointerdown', ev => {
+          descPointerDownInside = true;
+          descSelecting = false; // not yet dragging
+          descHasSelection = false; // reset
+          descDownX = ev.clientX; descDownY = ev.clientY;
+          if (hideDescTimer) { clearTimeout(hideDescTimer); hideDescTimer = null; }
+          // attach a temporary pointermove to detect movement (drag-selection)
+          const onDescMove = mev => {
+            if (!descPointerDownInside) return;
+            const dx = mev.clientX - descDownX;
+            const dy = mev.clientY - descDownY;
+            if (dx * dx + dy * dy >= (4 * 4)) {
+              descSelecting = true;
+              if (hideDescTimer) { clearTimeout(hideDescTimer); hideDescTimer = null; }
+            }
+          };
+          window.addEventListener('pointermove', onDescMove);
+          // store so we can remove it on pointerup
+          descBox._onDescMove = onDescMove;
+        });
+        // when pointerup, finalize selection state immediately (no delay)
+        window.addEventListener('pointerup', ev => {
+          if (!descPointerDownInside) return;
+          descPointerDownInside = false;
+          // remove temporary move listener
+          if (descBox._onDescMove) { window.removeEventListener('pointermove', descBox._onDescMove); descBox._onDescMove = null; }
+          // if we detected a drag-selection, keep visible and mark selection state
+          if (descSelecting) {
+            descHasSelection = true;
+            descSelecting = false;
+            return;
+          }
+          // otherwise check if a selection exists right now
+          const sel = (typeof document.getSelection === 'function') ? document.getSelection() : null;
+          const hasSelectionInside = sel && !sel.isCollapsed && (descBox.contains(sel.anchorNode) || descBox.contains(sel.focusNode));
+          if (hasSelectionInside) {
+            descHasSelection = true;
+            return;
+          }
+          descHasSelection = false;
+          scheduleHideDesc();
+        });
+        // monitor the document selection so we can hide when the user deselects
+        document.addEventListener('selectionchange', () => {
+          const sel = (typeof document.getSelection === 'function') ? document.getSelection() : null;
+          const hasSelectionInside = sel && !sel.isCollapsed && (descBox.contains(sel.anchorNode) || descBox.contains(sel.focusNode));
+          if (hasSelectionInside) {
+            descHasSelection = true;
+            if (hideDescTimer) { clearTimeout(hideDescTimer); hideDescTimer = null; }
+          } else {
+            if (descHasSelection) {
+              descHasSelection = false;
+              scheduleHideDesc();
+            }
+          }
+        });
       descBox.dataset.hoverHandlers = '1';
     }
   } catch (e) {}
@@ -706,6 +865,13 @@ function createPersistentBox(skill, treeId) {
       const store = (window.__treeDataStore || []).find(s => s.treeId === treeId) || {};
       const nodes = store.data || [];
       const reqNames = reqs.map(rid => {
+        if (Array.isArray(rid)) {
+          const names = rid.map(id => {
+            const node = nodes.find(n => n.id === id) || {};
+            return node.name || id;
+          });
+          return `(${names.join(' or ')})`;
+        }
         const node = nodes.find(n => n.id === rid) || {};
         const name = node.name || rid;
         return `${name}`;
@@ -718,14 +884,20 @@ function createPersistentBox(skill, treeId) {
     }
   } catch (e) { requiresDisplay = (skill.requires || []).join(', ') || 'None'; }
 
-  try {
+    try {
     const t = (skill.type || 'shared').toLowerCase();
     let color = '#a00';
     if (t === 'offense') color = 'red';
     else if (t === 'defense') color = 'royalblue';
     else if (t === 'shared') color = 'purple';
-    box.style.borderColor = color;
-    box.style.background = 'rgba(0,0,0,0.98)'; // less transparent
+    else if (t === 'special') color = '#be6b0bff';
+    else if (t === 'utility') color = '#f840ff';
+    else if (t === 'vision') color = '#558921';
+    else if (t === 'v2') color = 'gold';
+
+    // set a CSS variable used by the border-image gradient
+    box.style.setProperty('--skill-border-color', color);
+    box.style.background = 'rgba(22, 22, 22, 0.97)'; // less transparent
   } catch (e) {}
   const closeId = `persist-close-${Date.now()}`;
   box.innerHTML = `
@@ -744,6 +916,9 @@ function createPersistentBox(skill, treeId) {
   // make the persistent box draggable
   try {
     let dragging = false;
+    let maybeDragging = false;
+    let pointerDownInsideContent = false;
+    let pointerIdActive = null;
     let startX = 0, startY = 0, origLeft = 0, origTop = 0;
     const onMove = (ev) => {
       if (!dragging) return;
@@ -760,31 +935,71 @@ function createPersistentBox(skill, treeId) {
       box.style.top = ny + 'px';
     };
     const onUp = (ev) => {
-      if (!dragging) return;
-      dragging = false;
-      try { box.releasePointerCapture(ev.pointerId); } catch (e) {}
-      try { document.body.style.userSelect = ''; } catch (e) {}
-      box.classList.remove('dragging');
+      // if we were dragging, finish the drag
+      if (dragging) {
+        dragging = false;
+        try { box.releasePointerCapture(pointerIdActive || ev.pointerId); } catch (e) {}
+        try { document.body.style.userSelect = ''; } catch (e) {}
+        box.classList.remove('dragging');
+      }
+      // clear any pending non-started drag
+      maybeDragging = false;
+      pointerDownInsideContent = false;
+      pointerIdActive = null;
     };
     box.addEventListener('pointerdown', ev => {
       // ignore clicks on the close button
       if (ev.target.closest('.persist-close')) return;
-      ev.preventDefault();
-      dragging = true;
-      startX = ev.clientX;
-      startY = ev.clientY;
-      const rect = box.getBoundingClientRect();
-      origLeft = rect.left;
-      origTop = rect.top;
-      try { box.setPointerCapture(ev.pointerId); } catch (e) {}
-      try { document.body.style.userSelect = 'none'; } catch (e) {}
-      box.classList.add('dragging');
+      // only start a drag if the pointerdown is on the box itself (i.e., border/padding),
+      // allow clicks inside .persist-content to behave normally (selection/copy)
+      if (ev.target === box) {
+        maybeDragging = true;
+        pointerDownInsideContent = false;
+        pointerIdActive = ev.pointerId;
+        startX = ev.clientX;
+        startY = ev.clientY;
+        const rect = box.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+      } else {
+        // clicked inside content; don't initiate drag so selection works
+        maybeDragging = false;
+        pointerDownInsideContent = true;
+        pointerIdActive = null;
+      }
     });
+    // start actual drag only when pointer moves sufficiently and drag was initiated outside content
+    const onMaybeStart = (ev) => {
+      if (!maybeDragging || dragging) return;
+      if (ev.pointerId !== pointerIdActive) return;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const distSq = dx * dx + dy * dy;
+      const threshold = 6 * 6; // 6px movement
+      // if the initial down started inside the content, do not start a drag (allow selection)
+      if (pointerDownInsideContent) {
+        // cancel the pending drag, let selection happen
+        maybeDragging = false;
+        pointerDownInsideContent = false;
+        pointerIdActive = null;
+        return;
+      }
+      if (distSq >= threshold) {
+        // begin dragging
+        dragging = true;
+        maybeDragging = false;
+        try { box.setPointerCapture(pointerIdActive); } catch (e) {}
+        try { document.body.style.userSelect = 'none'; } catch (e) {}
+        box.classList.add('dragging');
+      }
+    };
+    window.addEventListener('pointermove', onMaybeStart);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     // store cleanup so removePersistentBox can remove listeners
     box._dragCleanup = () => {
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointermove', onMaybeStart);
       window.removeEventListener('pointerup', onUp);
     };
   } catch (e) {}
@@ -812,28 +1027,31 @@ async function handleSkillClick(e, skill, treeId) {
   const remaining = totalPoints - getSpent();
 
   if (selected.has(key)) {
-    // can't deselect if children depend on it — but allow deselection when
-    // the dependent uses an OR operator and another required parent is still selected
-    const store = window.__treeDataStore.find(s => s.treeId === treeId);
-    const dependents = store.data.filter(s => s.requires?.includes(skill.id));
-    for (const d of dependents) {
-      const depKey = `${treeId}::${d.id}`;
-      if (!selected.has(depKey)) continue; // only care about selected dependents
-      const opRaw = (d.requires_operator || d.requiresOperator || '').toString().toLowerCase();
-      const reqs = Array.isArray(d.requires) ? d.requires : (d.requires ? [d.requires] : []);
-      if (opRaw === 'or') {
-        // if any other required parent is still selected, it's safe to deselect this parent
-        const otherSelected = reqs
-          .filter(rid => rid !== skill.id)
-          .some(rid => selected.has(`${treeId}::${rid}`));
-        if (otherSelected) continue; // safe for this dependent
-        // otherwise, this is the last selected required parent -> block
-        showAlert("You must deselect dependent skills first.");
-        return;
-      } else {
-        // AND or unspecified behavior: block deselecting while dependent is selected
-        showAlert("You must deselect dependent skills first.");
-        return;
+    // In DM Mode, ignore dependent blocking and allow free deselection
+    if (!window.__dmMode) {
+      // can't deselect if children depend on it — but allow deselection when
+      // the dependent uses an OR operator and another required parent is still selected
+      const store = window.__treeDataStore.find(s => s.treeId === treeId);
+      const dependents = store.data.filter(s => (s.requires || []).some(r => Array.isArray(r) ? r.includes(skill.id) : r === skill.id));
+      for (const d of dependents) {
+        const depKey = `${treeId}::${d.id}`;
+        if (!selected.has(depKey)) continue; // only care about selected dependents
+        const opRaw = (d.requires_operator || d.requiresOperator || '').toString().toLowerCase();
+        const reqs = Array.isArray(d.requires) ? d.requires : (d.requires ? [d.requires] : []);
+        if (opRaw === 'or') {
+          // if any other required parent is still selected, it's safe to deselect this parent
+          const otherSelected = reqs
+            .filter(rid => rid !== skill.id)
+            .some(rid => selected.has(`${treeId}::${rid}`));
+          if (otherSelected) continue; // safe for this dependent
+          // otherwise, this is the last selected required parent -> block
+          showAlert("You must deselect dependent skills first.");
+          return;
+        } else {
+          // AND or unspecified behavior: block deselecting while dependent is selected
+          showAlert("You must deselect dependent skills first.");
+          return;
+        }
       }
     }
 
@@ -846,33 +1064,22 @@ async function handleSkillClick(e, skill, treeId) {
     try { if ((skill.id || '') === 'armament_awakening') { skill._awakening = null; } } catch (e) {}
   } else {
     const reqs = skill.requires || [];
-    if (reqs.length) {
-      const opRaw = (skill.requires_operator || skill.requiresOperator || '').toString().toLowerCase();
-      if (opRaw === 'or') {
-        if (!reqs.some(rid => selected.has(`${treeId}::${rid}`))) {
-          showAlert("This skill requires one of its prerequisites to be selected.");
-          return;
-        }
-      } else if (opRaw === 'and') {
-        if (!reqs.every(rid => selected.has(`${treeId}::${rid}`))) {
-          showAlert("Missing required skills.");
-          return;
-        }
-      } else {
-        // fallback: preserve previous behavior (shared-type acts like OR, others like AND)
-        if ((skill.type || 'shared') === 'shared') {
-          if (!reqs.some(rid => selected.has(`${treeId}::${rid}`))) {
+      if (reqs.length && !window.__dmMode) {
+        const opRaw = (skill.requires_operator || skill.requiresOperator || '').toString().toLowerCase();
+        const selSet = new Set(
+          Array.from(selected)
+            .filter(k => k.startsWith(`${treeId}::`))
+            .map(k => k.split("::")[1])
+        );
+        if (!areRequirementsSatisfied(skill, selSet)) {
+          if (opRaw === 'or' || ((skill.type || 'shared') === 'shared' && !opRaw)) {
             showAlert("This skill requires one of its prerequisites to be selected.");
-            return;
-          }
-        } else {
-          if (!reqs.every(rid => selected.has(`${treeId}::${rid}`))) {
+          } else {
             showAlert("Missing required skills.");
-            return;
           }
+          return;
         }
       }
-    }
     if (remaining < cost) {
       showAlert("Not enough Haki points.");
       return;
@@ -941,6 +1148,7 @@ async function handleSkillClick(e, skill, treeId) {
 }
 
 /* -----------------------------------------------------------
+/* -----------------------------------------------------------
    AVAILABILITY & CONNECTORS
 ----------------------------------------------------------- */
 function updateAvailabilityAll(data, treeId) {
@@ -953,24 +1161,12 @@ function updateAvailabilityAll(data, treeId) {
     if (!s._el) continue;
     s._el.classList.remove("available");
     if (s._el.classList.contains("selected")) continue;
-    const reqs = s.requires || [];
-    if (reqs.length === 0) {
-      s._el.classList.add("available");
-    } else {
-      const opRaw = (s.requires_operator || s.requiresOperator || '').toString().toLowerCase();
-      if (opRaw === 'or') {
-        if (reqs.some(rid => selSet.has(rid))) s._el.classList.add('available');
-      } else if (opRaw === 'and') {
-        if (reqs.every(rid => selSet.has(rid))) s._el.classList.add('available');
-      } else {
-        // fallback: shared acts like OR, others act like AND
-        if ((s.type || 'shared') === 'shared') {
-          if (reqs.some(rid => selSet.has(rid))) s._el.classList.add('available');
-        } else {
-          if (reqs.every(rid => selSet.has(rid))) s._el.classList.add('available');
-        }
-      }
+    // In DM Mode all unselected skills are available
+    if (window.__dmMode) {
+      s._el.classList.add('available');
+      continue;
     }
+    if (areRequirementsSatisfied(s, selSet)) s._el.classList.add('available');
   }
 
   // Also update connector visuals: connectors that lead to an available node
@@ -1031,28 +1227,28 @@ function updateRemainingUI() {
   remainingDisplay.textContent = remaining < 0 ? 0 : remaining;
 }
 
+// Persist autosave state used for restoring progress (also called from handlers)
+function persistCurrentProgress() {
+  const save = {
+    selected: Array.from(selected),
+    totalPoints: Number(totalInput?.value || 10),
+    charName: document.getElementById("charName")?.value || ""
+  };
+  const poolChoices = {};
+  window.__treeDataStore.forEach(store => store.data.forEach(s => {
+    if (s._poolChoiceValue != null) poolChoices[s.id] = s._poolChoiceValue;
+  }));
+  const awakeningValues = {};
+  window.__treeDataStore.forEach(store => store.data.forEach(s => {
+    if (s._awakening) awakeningValues[s.id] = s._awakening;
+  }));
+  save.poolChoices = poolChoices;
+  save.awakeningValues = awakeningValues;
+  localStorage.setItem("hakiTreeAuto_v2", JSON.stringify(save));
+}
+
 function saveProgress() {
-  // Persist current selection and awakening/pool choices to localStorage for reload (not Save)
-  function persistCurrentProgress() {
-    const save = {
-      selected: Array.from(selected),
-      totalPoints,
-      charName: document.getElementById("charName")?.value || ""
-    };
-    // include any pool choice selections per node
-    const poolChoices = {};
-    window.__treeDataStore.forEach(store => store.data.forEach(s => {
-      if (s._poolChoiceValue != null) poolChoices[s.id] = s._poolChoiceValue;
-    }));
-    // include awakening values (initial pool/cap) if set
-    const awakeningValues = {};
-    window.__treeDataStore.forEach(store => store.data.forEach(s => {
-      if (s._awakening) awakeningValues[s.id] = s._awakening;
-    }));
-    save.poolChoices = poolChoices;
-    save.awakeningValues = awakeningValues;
-    localStorage.setItem("hakiTreeAuto_v2", JSON.stringify(save));
-  }
+  // Persisting auto-save is handled by `persistCurrentProgress()`
     // On page load, restore auto-saved progress if present
     const autoRaw = localStorage.getItem("hakiTreeAuto_v2");
     if (autoRaw) {
@@ -1189,22 +1385,19 @@ function randomizeSkills(mode = 'all') {
     const cost = Number(skill.cost || 0);
     if (cost > remaining) return false; // too expensive
     
-    // Check if requirements are met
+    // Check if requirements are met using the same-tree selection set
+    // If DM Mode is on, ignore requirements and treat as available
+    if (window.__dmMode) return true;
     const reqs = skill.requires || [];
     if (reqs.length === 0) return true;
-    
-    const opRaw = (skill.requires_operator || '').toString().toLowerCase();
-    if (opRaw === 'or') {
-      return reqs.some(rid => {
-        const store = window.__treeDataStore.find(s => s.data.find(n => n.id === rid));
-        return store && selected.has(`${store.treeId}::${rid}`);
-      });
-    } else {
-      return reqs.every(rid => {
-        const store = window.__treeDataStore.find(s => s.data.find(n => n.id === rid));
-        return store && selected.has(`${store.treeId}::${rid}`);
-      });
-    }
+    const store = window.__treeDataStore.find(s => s.data.find(n => n.id === skill.id));
+    if (!store) return false;
+    const selSet = new Set(
+      Array.from(selected)
+        .filter(k => k.startsWith(`${store.treeId}::`))
+        .map(k => k.split("::")[1])
+    );
+    return areRequirementsSatisfied(skill, selSet);
   });
   
   if (availableSkills.length === 0) {
@@ -1254,19 +1447,14 @@ function randomizeSkills(mode = 'all') {
         availableSkills.push(s);
         return;
       }
-      
-      const sopRaw = (s.requires_operator || '').toString().toLowerCase();
-      if (sopRaw === 'or') {
-        if (sreqs.some(rid => {
-          const sstore = window.__treeDataStore.find(ss => ss.data.find(n => n.id === rid));
-          return sstore && selected.has(`${sstore.treeId}::${rid}`);
-        })) availableSkills.push(s);
-      } else {
-        if (sreqs.every(rid => {
-          const sstore = window.__treeDataStore.find(ss => ss.data.find(n => n.id === rid));
-          return sstore && selected.has(`${sstore.treeId}::${rid}`);
-        })) availableSkills.push(s);
-      }
+      const sstore = window.__treeDataStore.find(ss => ss.data.find(n => n.id === s.id));
+      if (!sstore) return;
+      const sSelSet = new Set(
+        Array.from(selected)
+          .filter(k => k.startsWith(`${sstore.treeId}::`))
+          .map(k => k.split("::")[1])
+      );
+      if (areRequirementsSatisfied(s, sSelSet)) availableSkills.push(s);
     });
   }
   
@@ -1604,11 +1792,44 @@ function setupGlobalInteractions() {
   const fileImport = document.getElementById("fileImport");
   if (fileImport) fileImport.addEventListener("change", importCharacter);
 
+  // Update remaining and autosave when total points change
+  if (totalInput) {
+    const onTotalChange = () => {
+      updateRemainingUI();
+      if (charStatsBox && charStatsBox.style.display === 'block') renderCharStats();
+      try { persistCurrentProgress(); } catch (e) {}
+    };
+    totalInput.addEventListener('input', onTotalChange);
+    totalInput.addEventListener('change', onTotalChange);
+  }
+
   // Credits button (floating) wiring
   const creditsBtn = document.getElementById('creditsBtn');
   if (creditsBtn) creditsBtn.addEventListener('click', () => {
     // toggle credits animation
     if (window.__creditsRunning) stopCredits(); else startCredits();
+    // toggle presence of DM Mode button
+    try {
+      const existing = document.getElementById('dmModeBtn');
+      if (existing) {
+        // remove DM Mode button only; do NOT toggle DM mode off
+        existing.remove();
+      } else {
+        const dm = document.createElement('button');
+        dm.id = 'dmModeBtn';
+        // use credits button styling so it looks identical
+        dm.className = 'credits-btn dm-btn';
+        dm.textContent = 'DM Mode';
+        dm.addEventListener('click', ev => {
+          ev.stopPropagation();
+          toggleDMMode();
+        });
+        // reflect current DM state visually
+        dm.classList.toggle('active', !!window.__dmMode);
+        // place to the left of the credits button (match credits side)
+        creditsBtn.parentNode.insertBefore(dm, creditsBtn);
+      }
+    } catch (e) {}
   });
 
   // tree toggle buttons (collapse/expand)
@@ -1640,6 +1861,8 @@ function setupGlobalInteractions() {
 
 function attachGlobalPanZoom(viewport) {
   // Move view much lower and to the right: increase ty (down), increase tx (right)
+  const MIN_SCALE = 0.25; // allow farther zoom-out
+  const MAX_SCALE = 1.75;  // allow slightly more zoom-in
   const state = { tx: 100, ty: 400, scale: 0.6, dragging: false, lastX: 0, lastY: 0 };
 
   function apply() {
@@ -1655,12 +1878,12 @@ function attachGlobalPanZoom(viewport) {
   const sliderHeight = zoomSlider ? zoomSlider.clientHeight : 100;
   if (zoomInBtn && zoomOutBtn) {
     zoomInBtn.addEventListener("click", () => {
-      state.scale = clamp(state.scale * 1.15, 0.3, 3.5);
+      state.scale = clamp(state.scale * 1.15, MIN_SCALE, MAX_SCALE);
       apply();
         syncThumb();
     });
     zoomOutBtn.addEventListener("click", () => {
-      state.scale = clamp(state.scale * 0.85, 0.3, 3.5);
+      state.scale = clamp(state.scale * 0.85, MIN_SCALE, MAX_SCALE);
       apply();
         syncThumb();
     });
@@ -1670,7 +1893,7 @@ function attachGlobalPanZoom(viewport) {
     ev.preventDefault();
     const delta = -ev.deltaY;
     const zoomFactor = delta > 0 ? 1.08 : 0.92;
-    const newScale = clamp(state.scale * zoomFactor, 0.3, 3.5);
+    const newScale = clamp(state.scale * zoomFactor, MIN_SCALE, MAX_SCALE);
     const rect = wrapper.getBoundingClientRect();
     const cx = ev.clientX - rect.left;
     const cy = ev.clientY - rect.top;
@@ -1685,12 +1908,12 @@ function attachGlobalPanZoom(viewport) {
   // Slider sync helpers
   function scaleToThumb(scale) {
     // map scale range [0.3,3.5] to slider Y (0..height)
-    const minS = 0.3, maxS = 3.5;
+    const minS = MIN_SCALE, maxS = MAX_SCALE;
     const pct = (scale - minS) / (maxS - minS);
     return Math.round((1 - pct) * (zoomSlider.clientHeight || sliderHeight));
   }
   function thumbToScale(y) {
-    const minS = 0.3, maxS = 3.5;
+    const minS = MIN_SCALE, maxS = MAX_SCALE;
     const h = zoomSlider.clientHeight || sliderHeight;
     const pct = 1 - clamp(y / h, 0, 1);
     return minS + pct * (maxS - minS);

@@ -6,7 +6,8 @@
     "requires": [],
     "requires_operator": "NONE",
     "positionTag": "base",
-    "type": "shared",
+    "type": "special",
+    "effects": [ { "type": "conqueror_range", "value": 20 } ],
     "description": "Upon Awakening Conqueror's Haki. <ul><li>Your starting Conqueror's Range is 20 ft. </li><li>You gain Conqueror’s Will  for free automatically </li><li>You gain Conqueror's Roar</li></ul>"
   },
 
@@ -17,7 +18,7 @@
     "tier": 1,
     "requires": ["conquerors_awakening"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "v2",
     "description": "Gain access to Conqueror’s Roar ability <br><br> As an action you roll a charisma check + character level. Everyone within your range will contest it with a similar check of their own. Meaning they also add their total lvl to the check. Depending on their lvl this will have different results: <ul><li>5+ lvls lower than yours: gets knocked out (unconscious) for 1 round on success. Fail= hit points drop to 0 </li><li>in between: On success they lose half movement speed for 1 round, on a fail they get restrained until your next turn ends and frightened for 1d4 turns. This condition can’t be dispelled or resisted</li><li>4+ lvls higher than yours: Success: unaffected.  Fail: they get frightened for 1d4 turns. <br><br> You can do this (proficiency bonus) times per long rest. You can double your range with this ability by rolling with disadvantage (if you didn't already have it).</li></ul>"
   },
   {
@@ -27,7 +28,7 @@
     "tier": 2,
     "requires": ["conquerors_will"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "v2",
     "description": "Gain access to the Conqueror’s Coating ability <br><br> Gain access to the Conqueror’s Roar Upgrade I <br><br> Conquerors's Coating<ul><li> Once per round when you make a melee/ranged attack or you are hit by an attack you can roll charisma check + character level for the damage or block. If melee attacking, you gain 5ft reach on your attack. If ranged attacking, the target must be within your CoC Range. (Can NOT be used at the same time as Armament and Observation skills) You can do this (proficiency bonus) times per long rest </li></ul> Conqueror's Roar Upgrade I <ul><li> When you use Conqueror’s Roar, any beast, plant  or creature with Int 3 or less must make its save with disadvantage. </li></ul>"
   },
     {
@@ -37,7 +38,7 @@
     "tier": 3,
     "requires": ["conquerors_color"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "v2",
     "description": "Gain access to the Conqueror’s Coating Upgrade I <br><br> Gain access to the Conqueror’s Roar Upgrade II <br><br> Conquerors's Coating Upgrade I<ul><li> Now if you are using Conqueror’s Coating and melee attacking, you gain 10ft reach on your attack instead of 5.</li></ul> Conqueror's Roar Upgrade I <ul><li> When you use Conqueror’s Roar, any beast, monstrosity, plant  or creature with Int 5 or less must make its save with disadvantage and you now gain advantage against that creature. If it fails, it immediately becomes Frightened and its hostile intent stops (it will flee or disengage rather than fight, with the possibility of being friendly/neutral). </li></ul>"
   },
    {
@@ -47,7 +48,7 @@
     "tier": 4,
     "requires": ["conquerors_soul"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "v2",
     "description": "Gain access to the Conqueror’s Coating Upgrade II <br><br> Gain access to the Conqueror’s Roar Upgrade III <br><br> Conquerors's Coating Upgrade II <ul><li> when using Conquerors's Coating, when you roll the charisma check for damage, you can now instead roll (2d20 + CHA mod + character level + Prof bonus) </li></ul> Conqueror's Roar Upgrade III <ul><li> When using Beast Tamer you now have advantage on the check. </li></ul>"
   },
    {
@@ -56,7 +57,7 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can use this (proficiency bonus + cha mod) times per day"
   },
   {
@@ -65,16 +66,16 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You learn to impose your will over others and can choose to reroll any mental saving throw (int/wis/cha) that you failed, once per day."
   },
   {
-    "id": "strong_will",
-    "name": "Strong Will",
+    "id": "powerful_will",
+    "name": "Powerful Will",
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "offense",
     "description": "You can add 1d4 to your Conqueror’s Roar , Conquerors's Coating  and contested Conqueror’s checks  and CoC CHA saving throws."
   },
     {
@@ -83,7 +84,7 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "offense",
     "description": "You can target creatures within range (instead of hitting everyone)"
   },
   {
@@ -92,7 +93,7 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "offense",
     "description": "People of higher lvls are now affected a little bit by Conqueror's Roar.  If they fail, they gain disadvantage on their attacks and lose 10 ft movement speed until your next turn ends"
   },
   {
@@ -101,7 +102,7 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "You can use Conqueror’s Roar as a bonus action"
   },
    {
@@ -110,7 +111,7 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "After using Conqueror's Roar, you can move up to 30 ft without provoking opportunity attacks."
   },
     {
@@ -119,7 +120,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can now recover half of your uses of Conqueror’s Roar and Conqueror's Coating on a short rest."
   },
   {
@@ -128,7 +129,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can now reroll any saving throw once per day"
   },
   {
@@ -137,8 +138,8 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upleft",
-    "type": "shared",
-    "description": "You can add 1d6 to your Conqueror’s Roar, Conquerors' Coating and contested Conqueror’s checks  and CoC CHA saving throws.. (stacks with Strong Will)"
+    "type": "offense",
+    "description": "You can add 1d6 to your Conqueror’s Roar, Conquerors' Coating and contested Conqueror’s checks  and CoC CHA saving throws.. (stacks with Powerful Will)"
   },
    {
     "id": "unrelenting_power",
@@ -146,7 +147,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "offense",
     "description": "You can now use Conquerors's Coating up to two times per round"
   },
   {
@@ -155,7 +156,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "offense",
     "description": "you can use Conqueror’s Roar or Conquerors's Coating as a Reaction. <ul><li>If you are doing this in response to an opposing Conqueror’s Roar/Coating attack, you gain advantage on the roll. It also causes a shockwave blast half your CoC range around you, knocking creatures prone or pushing them back.</li></ul>"
   },
   {
@@ -164,7 +165,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "when using Conqueror’s Coating you can now use it at the same time as armament and observation haki."
   },
    {
@@ -173,7 +174,7 @@
     "cost": 2,
     "requires": ["conquerors_color"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "Once per long rest, when you hit 0 HP, you instead drop to 1 HP and gain temporary HP equal to your Haki Level + Con modifier."
   },
     {
@@ -182,7 +183,7 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can use Conqueror’s Roar and Conquerors's Coating (proficency bonus x 2) times per long rest."
   },
   {
@@ -191,7 +192,7 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can now reroll any saving throw twice per day"
   },
   {
@@ -200,8 +201,8 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upleft",
-    "type": "shared",
-    "description": "You can add 1d8 to your Conqueror’s Roar, Conquerors's Coating, contested Conqueror’s checks and CoC CHA saving throws. (stacks with Strong Will & Tremendous Will)"
+    "type": "offense",
+    "description": "You can add 1d8 to your Conqueror’s Roar, Conquerors's Coating, contested Conqueror’s checks and CoC CHA saving throws. (stacks with Powerful Will & Tremendous Will)"
   },
    {
     "id": "unlimited_power",
@@ -209,7 +210,7 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "offense",
     "description": "as a reaction you can now use Conquerors's Coating on all your attacks/blocks each round."
   },
   {
@@ -218,7 +219,7 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "Using your Conqueror’s Roar you can block Observation haki from affecting you for 1d4 rounds"
   },
   {
@@ -227,7 +228,7 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "You can speak your intention to others within your CoC range telepathically, as your will conveys your intention."
   },
    {
@@ -236,16 +237,16 @@
     "cost": 3,
     "requires": ["conquerors_soul"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "offense",
     "description": "From now on when you use Conqueror’s Coating, your will has physical effects on your surroundings, such as; <br><br>  all creatures within 1/4 of your CoC Range (rounded up to the nearest 5) are hit by your Conquorer's Haki damage and make a DEX or CHA save. (can choose if you have Better Control) <br><br> On Success take half damage. On Fail take full damage and they are frightened until the start of your next turn. This works with Conqueror’s Clash and the shockwave can use the range from Destructive Will if the range is further. <br><br> cracking structures, dealing half CoC haki damage to structures, when using Conqueror’s Roar and Conqueror’s Coating)"
   },
       {
-    "id": "unwavering_spirit",
+    "id": "undying_spirit",
     "name": "Undying Spirit",
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "When you roll a Nat 20 on attack rolls or saving throws, you now restore a use of Conqueror’s Roar OR Conquerors's Coating (not both)"
   },
   {
@@ -254,7 +255,7 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "defense",
     "description": "You can now choose to succeed on a failed saving throw instead of rerolling it with Mental Advantage, Expert Advantage, or Universal Advantage once per long rest"
   },
   {
@@ -263,8 +264,8 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upleft",
-    "type": "shared",
-    "description": "You can add 1d10 to your Conqueror’s Roar, Conquerors's Coating, contested Conqueror’s checks and CoC CHA saving throws. (stacks with Strong Will, Tremendous Will & Overwhelming Will)"
+    "type": "offense",
+    "description": "You can add 1d10 to your Conqueror’s Roar, Conquerors's Coating, contested Conqueror’s checks and CoC CHA saving throws. (stacks with Powerful Will, Tremendous Will & Overwhelming Will)"
   },
    {
     "id": "infinite_power",
@@ -272,7 +273,7 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upleft",
-    "type": "shared",
+    "type": "offense",
     "description": "As a free action, you can now use Conquerors's Coating on all your attacks/blocks each round (assuming you have uses)."
   },
   {
@@ -281,7 +282,7 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "defense",
     "description": "You can speak to others within your CoC range telepathically, as your will conveys your message."
   },
   {
@@ -290,7 +291,7 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "offense",
     "description": "From now on when you use Conqueror’s Coating, your will has physical effects on your surroundings, such as; <br><br> all creatures within 1/2 of your CoC Range are hit by your Conqueror's Haki damage and make a DEX or CHA save. (can choose if you have Better Control) <br><br> On Success take half damage. On Fail take full damage and they are frightened until the start of your next turn. <br><br> You can use Conqueror’s Roar at half your CoC haki range at the same time."
   },
    {
@@ -299,7 +300,7 @@
     "cost": 4,
     "requires": ["conquerors_spirit"],
     "positionTag": "upright",
-    "type": "shared",
+    "type": "offense",
     "description": "You learn to cancel some devil fruit effects when you use your Conqueror’s Roar or Conquerors's Coating. To cancel one; roll a Conqueror’s check contested by a check of theirs (both still add level to the check). If you win, the devil fruit ability of your choosing ends and is locked until your next turn ends. (can do this prof bonus times per day.) "
   },
   {
@@ -309,7 +310,7 @@
     "requires": ["devils_bane"],
     "positionTag": "up",
     "positionOffsetY": 70,
-    "type": "shared",
+    "type": "offense",
     "description": "the duration of Devil’s Bane increases to 1d4 rounds"
   },
    {
@@ -319,7 +320,7 @@
     "requires": ["devils_binding"],
     "positionTag": "up",
     "positionOffsetY": 60,
-    "type": "shared",
+    "type": "offense",
     "description": "the duration of Devil’s Bane increases to 1d6 rounds"
   },
    {
@@ -329,7 +330,7 @@
     "requires": ["devils_burden"],
     "positionTag": "up",
     "positionOffsetY": 50,
-    "type": "shared",
+    "type": "offense",
     "description": "the duration of Devil’s Bane increases to 1d8 rounds"
   },
   {
@@ -338,8 +339,9 @@
     "cost": 1,
     "requires": ["conquerors_will"],
     "positionTag": "right",
+    "effects": [ { "type": "conqueror_range", "value": 30 } ],
     "positionOffsetX": 420,
-    "type": "shared",
+    "type": "vision",
     "description": "Your Conqueror's Range increases to 30ft."
   },
     {
@@ -348,7 +350,8 @@
     "cost": 1,
     "requires": ["coc_range_1"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 40 } ],
     "description": "Your Conqueror's Range increases to 40ft."
   }, 
    {
@@ -359,7 +362,8 @@
     "positionOffsetY": 250,
     "requires": ["coc_range_2"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 50 } ],
     "description": "Your Conqueror's Range increases to 50ft."
   },
   {
@@ -368,7 +372,8 @@
     "cost": 2,
     "requires": ["coc_range_3"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 60 } ],
     "description": "Your Conqueror's Range increases to 60ft."
   },
   {
@@ -379,7 +384,8 @@
     "requires": ["coc_range_4"],
     "positionOffsetY": 250,
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 70 } ],
     "description": "Your Conqueror's Range increases to 70ft."
   },
    {
@@ -388,7 +394,8 @@
     "cost": 3,
     "requires": ["coc_range_5"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 80 } ],
     "description": "Your Conqueror's Range increases to 80ft."
   },
   {
@@ -399,7 +406,8 @@
     "positionOffsetY": 250,
     "requires": ["coc_range_6"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "vision",
+     "effects": [ { "type": "conqueror_range", "value": 90 } ],
     "description": "Your Conqueror's Range increases to 90ft."
   },
     {
@@ -408,7 +416,8 @@
     "cost": 4,
     "requires": ["coc_range_7"],
     "positionTag": "up",
-    "type": "shared",
+     "effects": [ { "type": "conqueror_range", "value": 100 } ],
+    "type": "vision",
     "description": "Your Conqueror's Range increases to 100ft."
   },
  {
@@ -417,8 +426,9 @@
     "cost": 1,
     "requires": ["coc_range_1"],
     "positionTag": "upright",
-    "positionOffsetX": 50,
-    "type": "shared",
+    "positionOffsetX": 0,
+    "effects": [ { "type": "conqueror_range_mul", "delta": 2 } ],
+    "type": "utility",
     "description": "Your Conqueror's Range multiplies times 2"
   },
    {
@@ -428,7 +438,8 @@
     "tier": 2,
     "requires": ["extended_range_1"],
     "positionTag": "up",
-    "type": "shared",
+    "type": "utility",
+    "effects": [ { "type": "conqueror_range_mul", "delta": 3 } ],
     "description": "Your Conqueror's Range multiplies times 3"
   },
   {
@@ -438,7 +449,8 @@
     "tier": 3,
     "requires": ["extended_range_2"],
     "positionTag": "up",
-    "type": "shared",
+    "effects": [ { "type": "conqueror_range_mul", "delta": 4 } ],
+    "type": "utility",
     "description": "Your Conqueror's Range multiplies times 4"
   },
 {
@@ -448,7 +460,8 @@
     "tier": 4,
     "requires": ["extended_range_3"],
     "positionTag": "up",
-    "type": "shared",
+    "effects": [ { "type": "conqueror_range_mul", "delta": 5 } ],
+    "type": "utility",
     "description": "Your Conqueror's Range multiplies times 5"
   }
 ]
